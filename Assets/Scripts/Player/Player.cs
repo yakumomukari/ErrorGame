@@ -1,18 +1,20 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class Player : MonoBehaviour
+[DisallowMultipleComponent]
+public sealed class Player : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    public GameInputReader Input { get; private set; }
+    public PlayerStats Stats { get; private set; }
+    public PlayerMovement Movement { get; private set; }
+    public PlayerHealth Health { get; private set; }
+    public PlayerInventory Inventory { get; private set; }
 
-    // Update is called once per frame
-    void Update()
+    private void Awake()
     {
-        
+        Input = GetComponent<GameInputReader>();
+        Stats = GetComponent<PlayerStats>();
+        Movement = GetComponent<PlayerMovement>();
+        Health = GetComponent<PlayerHealth>();
+        Inventory = GetComponent<PlayerInventory>();
     }
 }

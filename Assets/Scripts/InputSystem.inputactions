@@ -1,0 +1,50 @@
+{
+    "version": 1,
+    "name": "InputSystem",
+    "maps": [
+        {
+            "name": "Gameplay",
+            "id": "b17bf1d6-a485-42c7-bb7f-9977d2289c5d",
+            "actions": [
+                { "name": "Move", "type": "Value", "id": "6c93edbd-9142-44ef-b190-a728d25f3c11", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true },
+                { "name": "Pointer", "type": "Value", "id": "99ec0474-324a-4236-91f6-084e220ce23e", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true },
+                { "name": "Fire", "type": "Button", "id": "dd9e4a42-0cca-46cc-a80f-94392cfdde02", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Dash", "type": "Button", "id": "d85e6b55-a6c4-431a-9fea-a1355e473cbd", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Bomb", "type": "Button", "id": "4e73c2db-60b2-498d-b381-054586fc6fa9", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Interact", "type": "Button", "id": "8ca76199-4404-4671-81f0-419f755d5b48", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Pause", "type": "Button", "id": "117bd85d-f4f6-44d6-8b3f-83bd62e04a21", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Restart", "type": "Button", "id": "560491ec-e77e-4782-a2ec-d93da3bf66bd", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "ItemsTab", "type": "Button", "id": "905fae24-3ac9-4729-8867-c77b5a20a45c", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "NotebookTab", "type": "Button", "id": "06fb6d17-acb4-470e-8078-d5271548b0ba", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "LogTab", "type": "Button", "id": "d47c847d-c775-40ee-b91d-68d44a0c7348", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
+            ],
+            "bindings": [
+                { "name": "WASD", "id": "1c6258be-3b10-442a-b08b-3c6c1ca2b11e", "path": "2DVector", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Move", "isComposite": true, "isPartOfComposite": false },
+                { "name": "up", "id": "e085e37c-cc4e-4a02-8403-2c1d35a959ce", "path": "<Keyboard>/w", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "down", "id": "d520ac10-3a96-43ce-b01a-60900e9f4156", "path": "<Keyboard>/s", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "left", "id": "8be33a60-363e-466a-8cc5-a14a22b54fb5", "path": "<Keyboard>/a", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "right", "id": "86b1e0a5-5e3d-4724-991f-531270e3767d", "path": "<Keyboard>/d", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Move", "isComposite": false, "isPartOfComposite": true },
+                { "name": "", "id": "444729ea-56d6-41ae-830e-42a45de69214", "path": "<Pointer>/position", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Pointer", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "05859c76-e0c8-4697-93ce-2a82a96d2220", "path": "<Mouse>/leftButton", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Fire", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "245b5916-a57a-447a-9885-e89c759d9c1b", "path": "<Keyboard>/space", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Dash", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "bb9a888c-b210-4f0c-8dc8-b3e32aabdc61", "path": "<Keyboard>/e", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Bomb", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "6afc3c21-aef7-460e-bae9-2764e562619e", "path": "<Keyboard>/f", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Interact", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "0b919151-e5a7-46b2-b217-587885579c4b", "path": "<Keyboard>/escape", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Pause", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "9424239a-6518-4e44-b2cd-9c64fd665eba", "path": "<Keyboard>/r", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Restart", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "b64c7635-23fd-4924-8909-9192b0178708", "path": "<Keyboard>/digit1", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "ItemsTab", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "50ac1db2-3cec-44c9-9cf7-845c9d08eea8", "path": "<Keyboard>/digit2", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "NotebookTab", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "971544fd-9e2b-4bb1-b214-b68d34b3cb59", "path": "<Keyboard>/digit3", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "LogTab", "isComposite": false, "isPartOfComposite": false }
+            ]
+        }
+    ],
+    "controlSchemes": [
+        {
+            "name": "Keyboard&Mouse",
+            "bindingGroup": "Keyboard&Mouse",
+            "devices": [
+                { "devicePath": "<Keyboard>", "isOptional": false, "isOR": false },
+                { "devicePath": "<Mouse>", "isOptional": false, "isOR": false }
+            ]
+        }
+    ]
+}
