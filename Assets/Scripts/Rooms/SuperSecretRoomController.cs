@@ -25,7 +25,7 @@ public sealed class SuperSecretRoomController : MonoBehaviour, IRoomFeature
             spawnPoint.position,
             Quaternion.identity,
             transform);
-        mushroom.Initialize(player, node.Rewards);
+        mushroom.Initialize(player, node);
     }
 
     public void Initialize(IRoomRuntimeContext runtimeContext, RoomNode node)

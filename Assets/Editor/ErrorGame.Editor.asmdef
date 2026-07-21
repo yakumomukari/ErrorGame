@@ -1,0 +1,24 @@
+{
+    "name": "ErrorGame.Editor",
+    "rootNamespace": "",
+    "references": [
+        "ErrorGame.Domain",
+        "ErrorGame.Input",
+        "ErrorGame.Runtime",
+        "Unity.InputSystem",
+        "Unity.InputSystem.UI",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.ugui"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

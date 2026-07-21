@@ -4,16 +4,45 @@ using System.Linq;
 
 public sealed class DungeonGenerator
 {
+    private const int MaximumGenerationAttempts = 256;
+
     public DungeonLayout Generate(int seed, int minimumVisibleRooms = 8, int maximumVisibleRooms = 12)
     {
-        if (minimumVisibleRooms < 6 || maximumVisibleRooms < minimumVisibleRooms)
+        if (minimumVisibleRooms < 8 || maximumVisibleRooms < minimumVisibleRooms)
         {
             throw new ArgumentOutOfRangeException(nameof(minimumVisibleRooms));
         }
 
-        Random random = new Random(seed);
-        int targetRoomCount = random.Next(minimumVisibleRooms, maximumVisibleRooms + 1);
-        DungeonLayout layout = new DungeonLayout(seed);
+        Random initialRandom = new Random(seed);
+        int targetRoomCount = initialRandom.Next(minimumVisibleRooms, maximumVisibleRooms + 1);
+        if (TryGenerate(seed, targetRoomCount, initialRandom, out DungeonLayout initialLayout))
+        {
+            return initialLayout;
+        }
+
+        // A compact random graph does not always contain two suitable terminal
+        // combat rooms. Retry deterministically instead of promoting a transit
+        // room to Item or Shop and breaking the room-topology contract.
+        for (int attempt = 1; attempt < MaximumGenerationAttempts; attempt++)
+        {
+            int attemptSeed = unchecked(seed * 486187739 + attempt * 16777619);
+            if (TryGenerate(seed, targetRoomCount, new Random(attemptSeed), out DungeonLayout retryLayout))
+            {
+                return retryLayout;
+            }
+        }
+
+        throw new InvalidOperationException(
+            "Could not generate terminal Item and Shop rooms within the retry limit.");
+    }
+
+    private static bool TryGenerate(
+        int seed,
+        int targetRoomCount,
+        Random random,
+        out DungeonLayout layout)
+    {
+        layout = new DungeonLayout(seed);
         RoomCoordinate start = new RoomCoordinate(0, 0);
         layout.StartCoordinate = start;
         layout.AddRoom(new RoomNode(start, RoomType.Start));
@@ -65,8 +94,13 @@ public sealed class DungeonGenerator
         ConnectAllAdjacentVisibleRooms(layout);
         AddSecretRoomData(layout, visibleCoordinates, reservedSecretCoordinate, random);
         RoomNode superSecretEntranceRoom = AddSuperSecretRoomData(layout, random);
-        AssignSpecialVisibleRooms(layout, start, bossEntranceRoom, superSecretEntranceRoom, random);
-        return layout;
+        if (!TryAssignSpecialVisibleRooms(layout, start, bossEntranceRoom, superSecretEntranceRoom, random))
+        {
+            layout = null;
+            return false;
+        }
+
+        return true;
     }
 
     private static RoomDirection GetRandomPerpendicularDirection(RoomDirection direction, Random random)
@@ -171,7 +205,7 @@ public sealed class DungeonGenerator
         return distances;
     }
 
-    private static void AssignSpecialVisibleRooms(
+    private static bool TryAssignSpecialVisibleRooms(
         DungeonLayout layout,
         RoomCoordinate start,
         RoomNode bossEntranceRoom,
@@ -179,36 +213,35 @@ public sealed class DungeonGenerator
         Random random)
     {
         List<RoomNode> candidates = layout.VisibleRooms
-            .Where(room => room.Coordinate != start &&
-                           room.Type != RoomType.Boss &&
+            .Where(room => room.Type == RoomType.Combat &&
+                           room.Coordinate != start &&
                            room != bossEntranceRoom &&
-                           room != superSecretEntranceRoom)
+                           room != superSecretEntranceRoom &&
+                           IsTerminalCombatRoom(layout, room))
             .ToList();
 
-        // Orthogonal grid neighbors always have opposite coordinate parity.
-        // Selecting Item and Shop from one parity group makes them non-adjacent.
-        // The Boss has exactly one adjacent room and that room is excluded here,
-        // so neither visible special room can touch the Boss.
-        List<SpecialRoomSet> validSets = candidates
-            .GroupBy(room => (room.Coordinate.X + room.Coordinate.Y) & 1)
-            .Where(group => group.Count() >= 2)
-            .Select(group =>
+        // Item and Shop are promoted only from one-door Combat leaves. Requiring
+        // a non-adjacent pair also prevents the two selected leaves from becoming
+        // each other's only neighbor after their types change.
+        List<SpecialRoomSet> validSets = new List<SpecialRoomSet>();
+        for (int firstIndex = 0; firstIndex < candidates.Count - 1; firstIndex++)
+        {
+            for (int secondIndex = firstIndex + 1; secondIndex < candidates.Count; secondIndex++)
             {
-                RoomNode[] rooms = group
-                    .OrderByDescending(room => room.Coordinate.ManhattanDistance(start))
-                    .ThenBy(room => room.Coordinate.X)
-                    .ThenBy(room => room.Coordinate.Y)
-                    .Take(2)
-                    .ToArray();
-                return new SpecialRoomSet(
+                RoomNode first = candidates[firstIndex];
+                RoomNode second = candidates[secondIndex];
+                if (first.Coordinate.ManhattanDistance(second.Coordinate) <= 1) continue;
+
+                RoomNode[] rooms = { first, second };
+                validSets.Add(new SpecialRoomSet(
                     rooms,
-                    rooms.Sum(room => room.Coordinate.ManhattanDistance(start)));
-            })
-            .ToList();
+                    rooms.Sum(room => room.Coordinate.ManhattanDistance(start))));
+            }
+        }
 
         if (validSets.Count == 0)
         {
-            throw new InvalidOperationException("The generated graph has no two-room independent set for Item and Shop.");
+            return false;
         }
 
         int bestScore = validSets.Max(set => set.DistanceScore);
@@ -217,6 +250,15 @@ public sealed class DungeonGenerator
         bool swapTypes = random.Next(0, 2) == 1;
         (swapTypes ? selected[1] : selected[0]).SetType(RoomType.Item);
         (swapTypes ? selected[0] : selected[1]).SetType(RoomType.Shop);
+        return true;
+    }
+
+    private static bool IsTerminalCombatRoom(DungeonLayout layout, RoomNode room)
+    {
+        if (room.Type != RoomType.Combat || room.Connections.Count != 1) return false;
+        RoomDirection entrance = room.Connections.Single();
+        return layout.TryGetConnectedRoom(room, entrance, out RoomNode neighbor) &&
+               neighbor.Type == RoomType.Combat;
     }
 
     private static void AddSecretRoomData(

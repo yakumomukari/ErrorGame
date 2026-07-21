@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1000000000000000000000000000001, type: 3}
+  m_Name: AddBomb
+  m_EditorClassIdentifier: 
+  stableId: add_bomb
+  displayName: BOMB +1
+  displayColor: {r: 0.38, g: 0.44, b: 0.55, a: 1}
+  modifiers:
+  - operation: 8
+    amount: 1

@@ -11,7 +11,7 @@ public sealed class SuperMushroomPickup : MonoBehaviour
     [SerializeField] private TextMesh label;
 
     private Player player;
-    private RoomRewardState rewardState;
+    private RoomNode roomNode;
     private bool collected;
     private Vector3 baseScale;
 
@@ -21,10 +21,10 @@ public sealed class SuperMushroomPickup : MonoBehaviour
         label = mushroomLabel;
     }
 
-    public void Initialize(Player playerReference, RoomRewardState roomRewards)
+    public void Initialize(Player playerReference, RoomNode rewardRoom)
     {
         player = playerReference;
-        rewardState = roomRewards;
+        roomNode = rewardRoom;
         if (visualRoot != null) baseScale = visualRoot.localScale;
         if (label != null) label.text = "SUPER MUSHROOM\nMAX HEARTS +1\nOTHER STATS +50%";
     }
@@ -38,7 +38,7 @@ public sealed class SuperMushroomPickup : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (collected || player == null || rewardState == null ||
+        if (collected || player == null || roomNode == null ||
             other.GetComponentInParent<Player>() != player)
         {
             return;
@@ -48,7 +48,7 @@ public sealed class SuperMushroomPickup : MonoBehaviour
         // Two internal health units equal one complete heart in the HUD.
         player.Health.IncreaseMaxHealth(MaxHealthIncreaseUnits);
         player.Stats.MultiplyAll(OtherStatMultiplier);
-        rewardState.MarkItemClaimed();
+        roomNode.MarkItemClaimed();
         Destroy(gameObject);
     }
 }

@@ -18,6 +18,7 @@ public sealed class CombatEncounterController : MonoBehaviour, IRoomFeature, IRo
     [SerializeField] private Transform rewardSpawnPoint;
 
     [Header("Spawn Prefabs")]
+    [SerializeField] private EnemySpawnCatalog enemySpawnCatalog;
     [SerializeField] private EnemySpawnTable enemySpawnTable;
     [SerializeField] private BasicResourcePickup[] rewardPrefabs;
 
@@ -29,7 +30,10 @@ public sealed class CombatEncounterController : MonoBehaviour, IRoomFeature, IRo
     public CombatEncounterState State { get; private set; } = CombatEncounterState.Dormant;
     public int ActiveEnemyCount => livingEnemies.Count;
     public IReadOnlyList<EnemyHealth> LivingEnemies => livingEnemies;
-    public EnemySpawnTable SpawnTable => enemySpawnTable;
+    public EnemySpawnCatalog SpawnCatalog => enemySpawnCatalog;
+    public EnemySpawnTable SpawnTable => enemySpawnCatalog != null
+        ? enemySpawnCatalog.SpawnTable
+        : enemySpawnTable;
     public bool LocksRoom => roomNode != null && roomNode.Type == RoomType.Combat && State != CombatEncounterState.Cleared;
     public event Action Cleared;
 
@@ -45,6 +49,11 @@ public sealed class CombatEncounterController : MonoBehaviour, IRoomFeature, IRo
         rewardSpawnPoint = rewardPoint;
         enemySpawnTable = spawnTable;
         rewardPrefabs = basicRewardPrefabs;
+    }
+
+    public void SetSpawnCatalog(EnemySpawnCatalog catalog)
+    {
+        enemySpawnCatalog = catalog;
     }
 
     public void Bind(Player playerReference, RoomNode node, int dungeonSeed)
@@ -85,12 +94,13 @@ public sealed class CombatEncounterController : MonoBehaviour, IRoomFeature, IRo
     private EnemyHealth SpawnWeightedEnemy(Transform spawnPoint, int slotIndex)
     {
         if (spawnPoint == null) return null;
-        int totalWeight = enemySpawnTable != null ? enemySpawnTable.TotalWeight : 0;
+        EnemySpawnTable activeSpawnTable = SpawnTable;
+        int totalWeight = activeSpawnTable != null ? activeSpawnTable.TotalWeight : 0;
         if (totalWeight <= 0) return null;
 
         int slotSeed = unchecked(encounterSeed * 486187739 + slotIndex * 16777619);
         int roll = new System.Random(slotSeed).Next(totalWeight);
-        if (!enemySpawnTable.TrySelect(roll, out MonoBehaviour enemyPrefab)) return null;
+        if (!activeSpawnTable.TrySelect(roll, out MonoBehaviour enemyPrefab)) return null;
 
         MonoBehaviour enemyBehaviour = Instantiate(
             enemyPrefab,

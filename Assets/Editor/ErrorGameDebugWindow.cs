@@ -71,9 +71,14 @@ public sealed class ErrorGameDebugWindow : EditorWindow
         {
             EditorGUILayout.Space(6f);
             EditorGUILayout.LabelField("Session", EditorStyles.boldLabel);
+            DrawValue("Floor", session.CurrentFloor);
             DrawValue("Seed", session.ActiveSeed);
+            DrawObjectRow("Room Prefab Catalog", session.RoomPrefabs);
             DrawValue("Current Room", session.CurrentRoom != null
                 ? $"{session.CurrentRoom.Node.Type} {session.CurrentRoom.Node.Coordinate}"
+                : "None");
+            DrawValue("Current Variant", session.CurrentRoom != null
+                ? session.CurrentRoom.Node.RoomVariantId
                 : "None");
             DrawValue("Entrance", session.Rooms != null && session.Rooms.CurrentEntranceDirection.HasValue
                 ? session.Rooms.CurrentEntranceDirection.Value.ToString()
@@ -100,7 +105,7 @@ public sealed class ErrorGameDebugWindow : EditorWindow
         DrawValue("Coins", player.Inventory.Coins);
         DrawValue("Bombs", player.Inventory.Bombs);
         DrawValue("Move Speed", player.Stats.MoveSpeed);
-        DrawValue("Fire Rate", player.Stats.FireRate);
+        DrawValue("Fire Rate", $"{player.Stats.FireRate:0.00}/{player.Stats.MaximumFireRate:0.00}");
         DrawValue("Damage", player.Stats.Damage);
         DrawValue("Range", player.Stats.Range);
         DrawValue("Projectile Speed", player.Stats.ProjectileSpeed);
@@ -126,6 +131,7 @@ public sealed class ErrorGameDebugWindow : EditorWindow
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField($"{room.Type} {room.Coordinate}", EditorStyles.boldLabel);
             DrawValue("Visited / Cleared", $"{room.IsVisited} / {room.IsCleared}");
+            DrawValue("Prefab Variant", room.RoomVariantId);
             DrawValue("Connections", string.Join(", ", room.Connections));
             DrawValue("Item Claimed", room.IsItemClaimed);
             DrawValue("Combat Reward", $"type {room.CombatRewardType}, collected {room.IsCombatRewardCollected}");
@@ -152,7 +158,7 @@ public sealed class ErrorGameDebugWindow : EditorWindow
     private static void DrawInput()
     {
         Player player = FindObjectOfType<Player>();
-        GameInputReader reader = player != null ? player.Input : FindObjectOfType<GameInputReader>();
+        GameInputReader reader = player != null ? player.InputReader : FindObjectOfType<GameInputReader>();
         InputActionAsset asset = reader != null
             ? reader.InputActions
             : AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/Scripts/InputSystem.inputactions");

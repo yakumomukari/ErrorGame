@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 [DefaultExecutionOrder(-100)]
 [DisallowMultipleComponent]
-public sealed class GameInputReader : MonoBehaviour
+public sealed class GameInputReader : MonoBehaviour, IPlayerInput
 {
     [SerializeField] private InputActionAsset inputActions;
 

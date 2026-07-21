@@ -11,6 +11,10 @@ public sealed class MinimapController : MonoBehaviour
 
     private readonly List<GameObject> spawnedVisuals = new List<GameObject>();
     private GameSession session;
+    private bool refreshPending;
+
+    public int SpawnedVisualCount => spawnedVisuals.Count;
+    public bool RefreshPending => refreshPending;
 
     public void Configure(RectTransform mapNodesRoot, Image roomNodeTemplate, Image roomConnectionTemplate)
     {
@@ -24,7 +28,7 @@ public sealed class MinimapController : MonoBehaviour
         if (session != null) session.RoomChanged -= OnRoomChanged;
         session = gameSession;
         if (session != null) session.RoomChanged += OnRoomChanged;
-        Refresh();
+        RequestRefresh();
     }
 
     public static bool ShouldDisplayRoom(DungeonLayout layout, RoomNode room)
@@ -67,15 +71,39 @@ public sealed class MinimapController : MonoBehaviour
 
     private void OnRoomChanged(RoomNode room)
     {
-        Refresh();
+        RequestRefresh();
     }
 
-    private void Refresh()
+    private void LateUpdate()
+    {
+        if (!refreshPending) return;
+        refreshPending = false;
+        RefreshNow();
+    }
+
+    private void OnEnable()
+    {
+        RequestRefresh();
+    }
+
+    private void OnRectTransformDimensionsChange()
+    {
+        RequestRefresh();
+    }
+
+    private void RequestRefresh()
+    {
+        refreshPending = true;
+    }
+
+    private void RefreshNow()
     {
         ClearNodes();
         if (session == null || session.Layout == null || nodesRoot == null ||
             nodeTemplate == null || connectionTemplate == null) return;
 
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(nodesRoot);
         CalculateVisibleBounds(session.Layout, out int minX, out int maxX, out int minY, out int maxY);
         float width = nodesRoot.rect.width > 0f ? nodesRoot.rect.width : nodesRoot.sizeDelta.x;
         float height = nodesRoot.rect.height > 0f ? nodesRoot.rect.height : nodesRoot.sizeDelta.y;
@@ -172,7 +200,7 @@ public sealed class MinimapController : MonoBehaviour
         maxY = int.MinValue;
         foreach (RoomNode room in layout.Rooms.Values)
         {
-            if (RoomTypeUtility.IsHiddenRoom(room.Type) && !room.IsVisited) continue;
+            if (!ShouldDisplayRoom(layout, room)) continue;
             minX = Mathf.Min(minX, room.Coordinate.X);
             maxX = Mathf.Max(maxX, room.Coordinate.X);
             minY = Mathf.Min(minY, room.Coordinate.Y);
@@ -187,7 +215,9 @@ public sealed class MinimapController : MonoBehaviour
     {
         foreach (GameObject visual in spawnedVisuals)
         {
-            if (visual != null) Destroy(visual);
+            if (visual == null) continue;
+            visual.SetActive(false);
+            Destroy(visual);
         }
         spawnedVisuals.Clear();
     }
@@ -195,5 +225,7 @@ public sealed class MinimapController : MonoBehaviour
     private void OnDestroy()
     {
         if (session != null) session.RoomChanged -= OnRoomChanged;
+        session = null;
+        refreshPending = false;
     }
 }

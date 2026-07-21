@@ -96,6 +96,10 @@ public static class ShopProductCatalog
         {
             return player.Health.CurrentHealthUnits < player.Health.MaxHealthUnits;
         }
+        if (type == ShopProductType.FireRate)
+        {
+            return player.Stats.FireRate < player.Stats.MaximumFireRate;
+        }
         return true;
     }
 

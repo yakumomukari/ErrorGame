@@ -6,4 +6,5 @@ public interface IRoomRuntimeContext
     bool IsSecretPassageCandidate(RoomNode room, RoomDirection direction);
     bool TryTransition(RoomController sourceRoom, RoomDirection direction);
     bool TryOpenSecretPassage(RoomController sourceRoom, RoomDirection direction);
+    bool TryAdvanceToNextFloor(RoomNode sourceRoom);
 }

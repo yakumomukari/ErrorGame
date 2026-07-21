@@ -1,7 +1,6 @@
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerStats), typeof(PlayerAim))]
-[RequireComponent(typeof(GameInputReader))]
 [DisallowMultipleComponent]
 public sealed class PlayerShooter : MonoBehaviour
 {
@@ -9,14 +8,14 @@ public sealed class PlayerShooter : MonoBehaviour
     [SerializeField] private Projectile projectilePrefab;
     private PlayerStats stats;
     private PlayerAim aim;
-    private GameInputReader input;
+    private IPlayerInput input;
     private float nextShotTime;
 
     private void Awake()
     {
         stats = GetComponent<PlayerStats>();
         aim = GetComponent<PlayerAim>();
-        input = GetComponent<GameInputReader>();
+        input = PlayerInputResolver.Require(this);
     }
 
     private void Update()

@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
@@ -9,6 +8,7 @@ public sealed class MainMenuController : MonoBehaviour
     [SerializeField] private Button continueButton;
     [SerializeField] private Button quitButton;
     private IGameSaveRepository saveRepository;
+    private ISceneNavigator sceneNavigator;
 
     public void Configure(Button startGame, Button continueGame, Button quitGame)
     {
@@ -20,6 +20,7 @@ public sealed class MainMenuController : MonoBehaviour
     private void Start()
     {
         saveRepository = new JsonGameSaveRepository();
+        if (sceneNavigator == null) sceneNavigator = new UnitySceneNavigator();
         startButton.onClick.AddListener(StartNewGame);
         continueButton.onClick.AddListener(ContinueGame);
         quitButton.onClick.AddListener(QuitGame);
@@ -30,7 +31,7 @@ public sealed class MainMenuController : MonoBehaviour
     {
         saveRepository.Delete();
         GameLaunchContext.RequestNewGame();
-        SceneManager.LoadScene("Game");
+        sceneNavigator.LoadGame();
     }
 
     public void ContinueGame()
@@ -42,12 +43,17 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         GameLaunchContext.RequestContinue();
-        SceneManager.LoadScene("Game");
+        sceneNavigator.LoadGame();
     }
 
     public void QuitGame()
     {
-        Application.Quit();
+        sceneNavigator.QuitGame();
+    }
+
+    public void SetSceneNavigator(ISceneNavigator navigator)
+    {
+        sceneNavigator = navigator;
     }
 
     private void RefreshContinueButton()

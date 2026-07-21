@@ -8,8 +8,9 @@ public sealed class ShopProduct : MonoBehaviour
     [SerializeField] private TextMesh label;
 
     private Player player;
-    private GameInputReader input;
-    private RoomShopState shopState;
+    private IPlayerInput input;
+    private RoomNode roomNode;
+    private ShopProductDefinition productDefinition;
     private ShopProductType productType;
     private int slotIndex;
     private int price;
@@ -22,16 +23,38 @@ public sealed class ShopProduct : MonoBehaviour
         label = productLabel;
     }
 
-    public void Initialize(Player playerReference, RoomShopState roomShop, int index, ShopProductType type)
+    public void Initialize(Player playerReference, RoomNode shopRoom, int index, ShopProductType type)
     {
         player = playerReference;
         input = player.Input;
-        shopState = roomShop;
+        roomNode = shopRoom;
         slotIndex = index;
+        productDefinition = null;
         productType = type;
         price = ShopProductCatalog.GetPrice(type);
         if (visual != null) visual.color = ShopProductCatalog.GetColor(type);
         if (label != null) label.text = $"{ShopProductCatalog.GetDisplayName(type)}\n{price} COINS\nF BUY";
+    }
+
+    public void Initialize(
+        Player playerReference,
+        RoomNode shopRoom,
+        int index,
+        ShopProductDefinition definition)
+    {
+        player = playerReference;
+        input = player.Input;
+        roomNode = shopRoom;
+        slotIndex = index;
+        productDefinition = definition;
+        price = definition != null ? definition.Price : 0;
+        if (visual != null && definition != null) visual.color = definition.DisplayColor;
+        if (label != null)
+        {
+            label.text = definition != null
+                ? $"{definition.DisplayName}\n{price} COINS\nF BUY"
+                : "INVALID PRODUCT";
+        }
     }
 
     private void Update()
@@ -42,12 +65,17 @@ public sealed class ShopProduct : MonoBehaviour
 
     public bool TryPurchase()
     {
-        if (purchased || player == null || !ShopProductCatalog.CanApply(player, productType)) return false;
+        if (purchased || player == null || roomNode == null) return false;
+        bool canApply = productDefinition != null
+            ? productDefinition.CanApply(player)
+            : ShopProductCatalog.CanApply(player, productType);
+        if (!canApply) return false;
         if (!player.Inventory.SpendCoins(price)) return false;
 
         purchased = true;
-        ShopProductCatalog.Apply(player, productType);
-        shopState.MarkSlotPurchased(slotIndex);
+        if (productDefinition != null) productDefinition.Apply(player);
+        else ShopProductCatalog.Apply(player, productType);
+        roomNode.MarkShopSlotPurchased(slotIndex);
         Destroy(gameObject);
         return true;
     }

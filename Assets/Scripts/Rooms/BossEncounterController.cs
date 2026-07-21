@@ -8,6 +8,7 @@ public sealed class BossEncounterController : MonoBehaviour, IRoomFeature, IRoom
     [SerializeField] private BossEnemy bossPrefab;
     [SerializeField] private Transform rewardSpawnPoint;
     [SerializeField] private NormalUpgradePickup rewardPrefab;
+    [SerializeField] private PlayerEffectSet rewardSet;
 
     private Player player;
     private RoomNode roomNode;
@@ -16,6 +17,7 @@ public sealed class BossEncounterController : MonoBehaviour, IRoomFeature, IRoom
     private bool rewardSpawned;
 
     public bool LocksRoom => roomNode != null && roomNode.Type == RoomType.Boss && !roomNode.IsCleared;
+    public PlayerEffectSet RewardSet => rewardSet;
     public event Action Cleared;
 
     public void Configure(
@@ -28,6 +30,11 @@ public sealed class BossEncounterController : MonoBehaviour, IRoomFeature, IRoom
         bossPrefab = dungeonBossPrefab;
         rewardSpawnPoint = bossRewardSpawnPoint;
         rewardPrefab = bossRewardPrefab;
+    }
+
+    public void SetRewardSet(PlayerEffectSet effects)
+    {
+        rewardSet = effects;
     }
 
     public void Bind(Player playerReference, RoomNode node, int activeDungeonSeed)
@@ -85,13 +92,20 @@ public sealed class BossEncounterController : MonoBehaviour, IRoomFeature, IRoom
         rewardSpawned = true;
         int seed = unchecked(dungeonSeed * 486187739 ^ roomNode.Coordinate.GetHashCode() ^ 0xB055);
         System.Random random = new System.Random(seed);
-        NormalUpgradeType type = (NormalUpgradeType)random.Next(System.Enum.GetValues(typeof(NormalUpgradeType)).Length);
         NormalUpgradePickup reward = Instantiate(
             rewardPrefab,
             rewardSpawnPoint.position,
             Quaternion.identity,
             transform);
-        reward.Initialize(player, roomNode.Rewards, type);
+        if (rewardSet != null && rewardSet.Count > 0)
+        {
+            reward.Initialize(player, roomNode, rewardSet.GetAt(random.Next(rewardSet.Count)));
+        }
+        else
+        {
+            NormalUpgradeType type = (NormalUpgradeType)random.Next(System.Enum.GetValues(typeof(NormalUpgradeType)).Length);
+            reward.Initialize(player, roomNode, type);
+        }
     }
 
     private void OnDestroy()

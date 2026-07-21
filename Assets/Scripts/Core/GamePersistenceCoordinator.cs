@@ -13,6 +13,7 @@ public sealed class GamePersistenceCoordinator : IDisposable
     private readonly Func<RoomDirection?> currentEntranceProvider;
     private readonly IGameSaveRepository saveRepository;
     private readonly int dungeonSeed;
+    private readonly int floorNumber;
 
     private bool ready;
     private bool subscribed;
@@ -27,7 +28,8 @@ public sealed class GamePersistenceCoordinator : IDisposable
         Func<RoomNode> roomProvider,
         Func<RoomDirection?> entranceProvider,
         IGameSaveRepository repository,
-        int activeDungeonSeed)
+        int activeDungeonSeed,
+        int activeFloorNumber)
     {
         player = playerReference ?? throw new ArgumentNullException(nameof(playerReference));
         layout = dungeonLayout ?? throw new ArgumentNullException(nameof(dungeonLayout));
@@ -35,6 +37,7 @@ public sealed class GamePersistenceCoordinator : IDisposable
         currentEntranceProvider = entranceProvider ?? throw new ArgumentNullException(nameof(entranceProvider));
         saveRepository = repository ?? throw new ArgumentNullException(nameof(repository));
         dungeonSeed = activeDungeonSeed;
+        floorNumber = Math.Max(1, activeFloorNumber);
     }
 
     public void RestoreLayout(GameSaveData saveData)
@@ -51,7 +54,8 @@ public sealed class GamePersistenceCoordinator : IDisposable
                 roomData.purchasedShopSlots,
                 roomData.combatRewardType,
                 roomData.combatRewardCollected,
-                roomData.collectedSecretRewards);
+                roomData.collectedSecretRewards,
+                roomData.roomVariantId);
         }
 
         foreach (SecretPassageSaveData passage in saveData.openedSecretPassages)
@@ -100,23 +104,13 @@ public sealed class GamePersistenceCoordinator : IDisposable
         GameSaveData saveData = new GameSaveData
         {
             dungeonSeed = dungeonSeed,
+            floorNumber = floorNumber,
+            beginsAtFloorStart = false,
             currentRoomX = currentRoom.Coordinate.X,
             currentRoomY = currentRoom.Coordinate.Y,
             hasCurrentRoomEntrance = currentEntrance.HasValue,
             currentRoomEntranceDirection = currentEntrance.HasValue ? (int)currentEntrance.Value : 0,
-            player = new PlayerSaveData
-            {
-                currentHealthUnits = player.Health.CurrentHealthUnits,
-                maxHealthUnits = player.Health.MaxHealthUnits,
-                coins = player.Inventory.Coins,
-                bombs = player.Inventory.Bombs,
-                moveSpeed = player.Stats.MoveSpeed,
-                fireRate = player.Stats.FireRate,
-                damage = player.Stats.Damage,
-                range = player.Stats.Range,
-                projectileSpeed = player.Stats.ProjectileSpeed,
-                luck = player.Stats.Luck
-            }
+            player = CapturePlayer()
         };
 
         foreach (RoomNode node in layout.Rooms.Values)
@@ -131,13 +125,35 @@ public sealed class GamePersistenceCoordinator : IDisposable
                 purchasedShopSlots = new List<int>(node.PurchasedShopSlots),
                 combatRewardType = node.CombatRewardType,
                 combatRewardCollected = node.IsCombatRewardCollected,
-                collectedSecretRewards = new List<int>(node.CollectedSecretRewards)
+                collectedSecretRewards = new List<int>(node.CollectedSecretRewards),
+                roomVariantId = node.RoomVariantId
             });
 
             AddOpenedHiddenPassages(saveData, node);
         }
 
         saveRepository.Save(saveData);
+    }
+
+    public bool SaveNextFloor(int nextDungeonSeed, int nextFloorNumber)
+    {
+        if (!ready || player.Health.IsDead) return false;
+
+        saveRepository.Save(new GameSaveData
+        {
+            dungeonSeed = nextDungeonSeed,
+            floorNumber = Math.Max(1, nextFloorNumber),
+            beginsAtFloorStart = true,
+            currentRoomX = 0,
+            currentRoomY = 0,
+            hasCurrentRoomEntrance = false,
+            player = CapturePlayer()
+        });
+
+        // Prevent OnDestroy and autosave callbacks from overwriting the pending
+        // next-floor snapshot with the completed floor that is being unloaded.
+        ready = false;
+        return true;
     }
 
     public void Dispose()
@@ -171,6 +187,23 @@ public sealed class GamePersistenceCoordinator : IDisposable
                 });
             }
         }
+    }
+
+    private PlayerSaveData CapturePlayer()
+    {
+        return new PlayerSaveData
+        {
+            currentHealthUnits = player.Health.CurrentHealthUnits,
+            maxHealthUnits = player.Health.MaxHealthUnits,
+            coins = player.Inventory.Coins,
+            bombs = player.Inventory.Bombs,
+            moveSpeed = player.Stats.MoveSpeed,
+            fireRate = player.Stats.FireRate,
+            damage = player.Stats.Damage,
+            range = player.Stats.Range,
+            projectileSpeed = player.Stats.ProjectileSpeed,
+            luck = player.Stats.Luck
+        };
     }
 
     private void OnHealthChanged(int current, int maximum)

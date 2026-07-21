@@ -39,6 +39,7 @@ public sealed class RoomNode
     public bool IsItemClaimed => Rewards.IsItemClaimed;
     public int CombatRewardType => Rewards.CombatRewardType;
     public bool IsCombatRewardCollected => Rewards.IsCombatRewardCollected;
+    public string RoomVariantId { get; private set; }
     public IReadOnlyCollection<RoomDirection> Connections => connections;
     public IReadOnlyCollection<int> PurchasedShopSlots => Shop.PurchasedSlots;
     public IReadOnlyCollection<int> CollectedSecretRewards => Rewards.CollectedSecretRewards;
@@ -93,6 +94,14 @@ public sealed class RoomNode
         Rewards.MarkSecretRewardCollected(rewardIndex);
     }
 
+    public void AssignRoomVariant(string stableId)
+    {
+        string normalized = stableId != null ? stableId.Trim() : string.Empty;
+        if (RoomVariantId == normalized) return;
+        RoomVariantId = normalized;
+        NotifyStateChanged();
+    }
+
     public void RestoreState(
         bool visited,
         bool cleared,
@@ -100,11 +109,13 @@ public sealed class RoomNode
         IEnumerable<int> purchasedSlots,
         int combatRewardType,
         bool combatRewardCollected,
-        IEnumerable<int> secretRewards)
+        IEnumerable<int> secretRewards,
+        string roomVariantId = null)
     {
         Lifecycle.Restore(visited, cleared);
         Rewards.Restore(itemClaimed, combatRewardType, combatRewardCollected, secretRewards);
         Shop.Restore(purchasedSlots);
+        RoomVariantId = roomVariantId != null ? roomVariantId.Trim() : string.Empty;
     }
 
     private void NotifyStateChanged() => StateChanged?.Invoke();

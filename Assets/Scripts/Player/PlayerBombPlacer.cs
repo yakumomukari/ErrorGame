@@ -1,7 +1,6 @@
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerInventory))]
-[RequireComponent(typeof(GameInputReader))]
 [DisallowMultipleComponent]
 public sealed class PlayerBombPlacer : MonoBehaviour
 {
@@ -9,7 +8,7 @@ public sealed class PlayerBombPlacer : MonoBehaviour
     [SerializeField, Min(0f)] private float placementCooldown = 1f;
 
     private PlayerInventory inventory;
-    private GameInputReader input;
+    private IPlayerInput input;
     private float nextPlacementTime;
 
     public float CooldownRemaining => Mathf.Max(0f, nextPlacementTime - Time.time);
@@ -17,7 +16,7 @@ public sealed class PlayerBombPlacer : MonoBehaviour
     private void Awake()
     {
         inventory = GetComponent<PlayerInventory>();
-        input = GetComponent<GameInputReader>();
+        input = PlayerInputResolver.Require(this);
     }
 
     public void Configure(Bomb prefab, float cooldown)

@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public sealed class StageAHudController : MonoBehaviour
@@ -17,33 +17,42 @@ public sealed class StageAHudController : MonoBehaviour
     [SerializeField] private StageAPauseMenuController pauseMenu;
 
     private readonly List<Image> heartFills = new List<Image>();
-    private Player player;
-    private PlayerInteractor interactor;
-    private PlayerDash dash;
-    private GameInputReader input;
+    private IPlayerHudModel hudModel;
+    private IPlayerInput input;
+    private ISceneNavigator sceneNavigator;
 
     public void Bind(Player playerReference)
     {
-        if (player != null) Unsubscribe();
+        Bind(new PlayerHudModel(playerReference));
+    }
 
-        player = playerReference;
-        interactor = player.GetComponent<PlayerInteractor>();
-        dash = player.GetComponent<PlayerDash>();
-        input = player.Input;
+    public void Bind(IPlayerHudModel model)
+    {
+        if (hudModel != null) Unsubscribe();
 
-        player.Health.HealthChanged += OnHealthChanged;
-        player.Health.Died += OnPlayerDied;
-        player.Inventory.ResourcesChanged += RefreshResources;
-        player.Stats.Changed += RefreshStats;
-        interactor.PromptChanged += OnPromptChanged;
+        hudModel = model ?? throw new ArgumentNullException(nameof(model));
+        input = hudModel.Input;
+        if (sceneNavigator == null) sceneNavigator = new UnitySceneNavigator();
 
-        pauseMenu.Bind(player);
+        hudModel.HealthChanged += OnHealthChanged;
+        hudModel.Died += OnPlayerDied;
+        hudModel.ResourcesChanged += RefreshResources;
+        hudModel.StatsChanged += RefreshStats;
+        hudModel.PromptChanged += OnPromptChanged;
+
+        pauseMenu.Bind(hudModel);
         deathPanel.SetActive(false);
         BuildHearts();
         RefreshHearts();
         RefreshResources();
         RefreshStats();
         OnPromptChanged(string.Empty);
+    }
+
+    public void SetSceneNavigator(ISceneNavigator navigator)
+    {
+        sceneNavigator = navigator;
+        pauseMenu?.SetSceneNavigator(navigator);
     }
 
     public void Configure(
@@ -70,16 +79,18 @@ public sealed class StageAHudController : MonoBehaviour
 
     private void Update()
     {
-        if (player == null) return;
+        if (hudModel == null) return;
 
-        dashText.text = dash.IsDashing
+        dashText.text = hudModel.IsDashing
             ? "DASH"
-            : dash.CooldownRemaining > 0f ? $"Dash {dash.CooldownRemaining:0.0}s" : "Dash READY";
+            : hudModel.DashCooldownRemaining > 0f
+                ? $"Dash {hudModel.DashCooldownRemaining:0.0}s"
+                : "Dash READY";
 
-        if (player.Health.IsDead && input.RestartPressedThisFrame)
+        if (hudModel.IsDead && input.RestartPressedThisFrame)
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            sceneNavigator.ReloadCurrentScene();
         }
     }
 
@@ -91,7 +102,7 @@ public sealed class StageAHudController : MonoBehaviour
         }
         heartFills.Clear();
 
-        int heartCount = Mathf.CeilToInt(player.Health.MaxHealthUnits / 2f);
+        int heartCount = Mathf.CeilToInt(hudModel.MaxHealthUnits / 2f);
         for (int i = 0; i < heartCount; i++)
         {
             RectTransform slot = Instantiate(heartTemplate, heartsRoot);
@@ -112,30 +123,29 @@ public sealed class StageAHudController : MonoBehaviour
     {
         for (int i = 0; i < heartFills.Count; i++)
         {
-            int units = Mathf.Clamp(player.Health.CurrentHealthUnits - i * 2, 0, 2);
+            int units = Mathf.Clamp(hudModel.CurrentHealthUnits - i * 2, 0, 2);
             heartFills[i].fillAmount = units / 2f;
         }
     }
 
     private void RefreshResources()
     {
-        coinText.text = player.Inventory.Coins.ToString();
-        bombText.text = player.Inventory.Bombs.ToString();
+        coinText.text = hudModel.Coins.ToString();
+        bombText.text = hudModel.Bombs.ToString();
     }
 
     private void RefreshStats()
     {
-        if (player == null) return;
+        if (hudModel == null) return;
 
-        PlayerStats stats = player.Stats;
         statsText.text =
             "玩家属性\n\n" +
-            $"移速      {stats.MoveSpeed:0.00}\n" +
-            $"射速      {stats.FireRate:0.00}/秒\n" +
-            $"伤害      {stats.Damage:0.00}\n" +
-            $"射程      {stats.Range:0.00}\n" +
-            $"弹速      {stats.ProjectileSpeed:0.00}\n" +
-            $"幸运      {stats.Luck:0.00}";
+            $"移速      {hudModel.MoveSpeed:0.00}\n" +
+            $"射速      {hudModel.FireRate:0.00}/秒\n" +
+            $"伤害      {hudModel.Damage:0.00}\n" +
+            $"射程      {hudModel.Range:0.00}\n" +
+            $"弹速      {hudModel.ProjectileSpeed:0.00}\n" +
+            $"幸运      {hudModel.Luck:0.00}";
     }
 
     private void OnPromptChanged(string prompt)
@@ -152,16 +162,16 @@ public sealed class StageAHudController : MonoBehaviour
 
     private void Unsubscribe()
     {
-        player.Health.HealthChanged -= OnHealthChanged;
-        player.Health.Died -= OnPlayerDied;
-        player.Inventory.ResourcesChanged -= RefreshResources;
-        player.Stats.Changed -= RefreshStats;
-        if (interactor != null) interactor.PromptChanged -= OnPromptChanged;
+        hudModel.HealthChanged -= OnHealthChanged;
+        hudModel.Died -= OnPlayerDied;
+        hudModel.ResourcesChanged -= RefreshResources;
+        hudModel.StatsChanged -= RefreshStats;
+        hudModel.PromptChanged -= OnPromptChanged;
     }
 
     private void OnDestroy()
     {
         Time.timeScale = 1f;
-        if (player != null) Unsubscribe();
+        if (hudModel != null) Unsubscribe();
     }
 }

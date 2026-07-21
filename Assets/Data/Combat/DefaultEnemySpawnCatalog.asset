@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8dc95e1f6dd346548e9a97a4f256dbec, type: 3}
+  m_Name: DefaultEnemySpawnCatalog
+  m_EditorClassIdentifier: 
+  spawnTable:
+    entries:
+    - enemyPrefab: {fileID: 8225899820958655443, guid: ff8d3bf848d6cd04386eba79d17769a3, type: 3}
+      weight: 2
+    - enemyPrefab: {fileID: 8225899820958655443, guid: e6000000000000000000000000000002, type: 3}
+      weight: 1

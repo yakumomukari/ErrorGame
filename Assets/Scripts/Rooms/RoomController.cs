@@ -108,26 +108,43 @@ public sealed class RoomController : MonoBehaviour
     {
         roomFeatures.Clear();
         lockSources.Clear();
-        if (roomFeatureBehaviours == null) return;
+        HashSet<IRoomFeature> initializedFeatures = new HashSet<IRoomFeature>();
 
-        foreach (MonoBehaviour behaviour in roomFeatureBehaviours)
+        if (roomFeatureBehaviours != null)
         {
-            if (!(behaviour is IRoomFeature feature))
+            foreach (MonoBehaviour behaviour in roomFeatureBehaviours)
             {
-                if (behaviour != null)
+                if (!(behaviour is IRoomFeature))
                 {
-                    Debug.LogError($"{behaviour.name} does not implement IRoomFeature.", behaviour);
+                    if (behaviour != null)
+                    {
+                        Debug.LogError($"{behaviour.name} does not implement IRoomFeature.", behaviour);
+                    }
+                    continue;
                 }
-                continue;
-            }
 
-            roomFeatures.Add(feature);
-            feature.Initialize(roomRuntime, Node);
-            if (feature is IRoomLockSource lockSource)
-            {
-                lockSources.Add(lockSource);
-                lockSource.Cleared += OnEncounterCleared;
+                InitializeRoomFeature(behaviour, initializedFeatures);
             }
+        }
+
+        foreach (MonoBehaviour behaviour in GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            InitializeRoomFeature(behaviour, initializedFeatures);
+        }
+    }
+
+    private void InitializeRoomFeature(
+        MonoBehaviour behaviour,
+        HashSet<IRoomFeature> initializedFeatures)
+    {
+        if (!(behaviour is IRoomFeature feature) || !initializedFeatures.Add(feature)) return;
+
+        roomFeatures.Add(feature);
+        feature.Initialize(roomRuntime, Node);
+        if (feature is IRoomLockSource lockSource)
+        {
+            lockSources.Add(lockSource);
+            lockSource.Cleared += OnEncounterCleared;
         }
     }
 

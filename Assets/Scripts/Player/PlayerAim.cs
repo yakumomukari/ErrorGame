@@ -1,19 +1,18 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(GameInputReader))]
 public sealed class PlayerAim : MonoBehaviour
 {
     [SerializeField] private Transform aimPivot;
     private Camera mainCamera;
-    private GameInputReader input;
+    private IPlayerInput input;
 
     public Vector2 AimDirection { get; private set; } = Vector2.up;
 
     private void Awake()
     {
         mainCamera = Camera.main;
-        input = GetComponent<GameInputReader>();
+        input = PlayerInputResolver.Require(this);
     }
 
     private void Update()

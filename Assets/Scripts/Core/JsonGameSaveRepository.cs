@@ -80,7 +80,10 @@ public sealed class JsonGameSaveRepository : IGameSaveRepository
     public bool IsValid(GameSaveData data)
     {
         if (data == null || data.version != CurrentVersion || data.player == null ||
-            data.rooms == null || data.rooms.Count < 4 || data.openedSecretPassages == null)
+            data.rooms == null || (!data.beginsAtFloorStart && data.rooms.Count < 4) ||
+            (data.beginsAtFloorStart && data.rooms.Count != 0) ||
+            (data.beginsAtFloorStart && data.floorNumber < 1) ||
+            data.openedSecretPassages == null)
         {
             return false;
         }

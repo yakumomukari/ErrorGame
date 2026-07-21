@@ -10,8 +10,10 @@ public sealed class RoomRuntime : IRoomRuntimeContext
     private readonly DungeonLayout layout;
     private readonly Camera gameCamera;
     private readonly RoomController roomPrefab;
+    private readonly RoomPrefabCatalog roomPrefabCatalog;
     private readonly Transform roomRoot;
     private readonly Vector2 roomWorldSpacing;
+    private readonly Func<RoomNode, bool> nextFloorHandler;
     private readonly Dictionary<RoomCoordinate, RoomController> roomInstances =
         new Dictionary<RoomCoordinate, RoomController>();
 
@@ -21,6 +23,7 @@ public sealed class RoomRuntime : IRoomRuntimeContext
     public int ActiveSeed { get; }
     public RoomController CurrentRoom { get; private set; }
     public RoomDirection? CurrentEntranceDirection { get; private set; }
+    public RoomPrefabCatalog PrefabCatalog => roomPrefabCatalog;
 
     public event Action<RoomNode> RoomChanged;
 
@@ -31,22 +34,49 @@ public sealed class RoomRuntime : IRoomRuntimeContext
         RoomController dungeonRoomPrefab,
         Transform roomsRoot,
         Vector2 worldSpacing,
-        int activeSeed)
+        int activeSeed,
+        Func<RoomNode, bool> floorTransitionHandler = null)
+        : this(
+            player,
+            dungeonLayout,
+            camera,
+            dungeonRoomPrefab,
+            null,
+            roomsRoot,
+            worldSpacing,
+            activeSeed,
+            floorTransitionHandler)
+    {
+    }
+
+    public RoomRuntime(
+        Player player,
+        DungeonLayout dungeonLayout,
+        Camera camera,
+        RoomController dungeonRoomPrefab,
+        RoomPrefabCatalog prefabCatalog,
+        Transform roomsRoot,
+        Vector2 worldSpacing,
+        int activeSeed,
+        Func<RoomNode, bool> floorTransitionHandler = null)
     {
         Player = player ?? throw new ArgumentNullException(nameof(player));
         layout = dungeonLayout ?? throw new ArgumentNullException(nameof(dungeonLayout));
         gameCamera = camera ?? throw new ArgumentNullException(nameof(camera));
         roomPrefab = dungeonRoomPrefab ?? throw new ArgumentNullException(nameof(dungeonRoomPrefab));
+        roomPrefabCatalog = prefabCatalog;
         roomRoot = roomsRoot ?? throw new ArgumentNullException(nameof(roomsRoot));
         roomWorldSpacing = worldSpacing;
         ActiveSeed = activeSeed;
+        nextFloorHandler = floorTransitionHandler;
     }
 
     public void BuildRooms()
     {
         foreach (RoomNode node in layout.Rooms.Values)
         {
-            RoomController room = UnityEngine.Object.Instantiate(roomPrefab, roomRoot);
+            RoomController selectedPrefab = SelectRoomPrefab(node);
+            RoomController room = UnityEngine.Object.Instantiate(selectedPrefab, roomRoot);
             room.transform.localPosition = new Vector3(
                 node.Coordinate.X * roomWorldSpacing.x,
                 node.Coordinate.Y * roomWorldSpacing.y,
@@ -55,6 +85,25 @@ public sealed class RoomRuntime : IRoomRuntimeContext
             room.gameObject.SetActive(false);
             roomInstances.Add(node.Coordinate, room);
         }
+    }
+
+    private RoomController SelectRoomPrefab(RoomNode node)
+    {
+        if (roomPrefabCatalog == null) return roomPrefab;
+
+        if (roomPrefabCatalog.TryResolve(node.Type, node.RoomVariantId, out RoomPrefabEntry restoredEntry))
+        {
+            return restoredEntry.Prefab;
+        }
+
+        int selectionKey = CalculateRoomSelectionKey(ActiveSeed, node);
+        if (!roomPrefabCatalog.TrySelect(node.Type, selectionKey, out RoomPrefabEntry selectedEntry))
+        {
+            return roomPrefab;
+        }
+
+        node.AssignRoomVariant(selectedEntry.StableId);
+        return selectedEntry.Prefab;
     }
 
     public void EnterInitialRoom(RoomCoordinate coordinate, RoomDirection? savedEntranceDirection)
@@ -125,6 +174,12 @@ public sealed class RoomRuntime : IRoomRuntimeContext
         return true;
     }
 
+    public bool TryAdvanceToNextFloor(RoomNode sourceRoom)
+    {
+        return sourceRoom != null && CurrentRoom != null && CurrentRoom.Node == sourceRoom &&
+               nextFloorHandler != null && nextFloorHandler(sourceRoom);
+    }
+
     private void MoveCamera(Vector3 roomPosition)
     {
         gameCamera.transform.position = new Vector3(roomPosition.x, roomPosition.y, -10f);
@@ -133,5 +188,17 @@ public sealed class RoomRuntime : IRoomRuntimeContext
     private static bool IsValidEntrance(RoomNode room, RoomDirection? direction)
     {
         return room != null && direction.HasValue && room.HasConnection(direction.Value);
+    }
+
+    private static int CalculateRoomSelectionKey(int dungeonSeed, RoomNode room)
+    {
+        unchecked
+        {
+            int hash = dungeonSeed;
+            hash = hash * 397 ^ room.Coordinate.X;
+            hash = hash * 397 ^ room.Coordinate.Y;
+            hash = hash * 397 ^ (int)room.Type;
+            return hash;
+        }
     }
 }

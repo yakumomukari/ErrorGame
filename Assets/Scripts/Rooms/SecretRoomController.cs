@@ -26,7 +26,7 @@ public sealed class SecretRoomController : MonoBehaviour, IRoomFeature
                 spawnPoints[index].position,
                 Quaternion.identity,
                 transform);
-            reward.Collected += () => node.Rewards.MarkSecretRewardCollected(rewardIndex);
+            reward.Collected += () => node.MarkSecretRewardCollected(rewardIndex);
         }
     }
 

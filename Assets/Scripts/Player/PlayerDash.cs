@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerMovement), typeof(PlayerHealth), typeof(PlayerAim))]
-[RequireComponent(typeof(GameInputReader))]
 [DisallowMultipleComponent]
 public sealed class PlayerDash : MonoBehaviour
 {
@@ -13,7 +12,7 @@ public sealed class PlayerDash : MonoBehaviour
     private PlayerMovement movement;
     private PlayerHealth health;
     private PlayerAim aim;
-    private GameInputReader input;
+    private IPlayerInput input;
     private float nextDashTime;
 
     public bool IsDashing { get; private set; }
@@ -24,7 +23,7 @@ public sealed class PlayerDash : MonoBehaviour
         movement = GetComponent<PlayerMovement>();
         health = GetComponent<PlayerHealth>();
         aim = GetComponent<PlayerAim>();
-        input = GetComponent<GameInputReader>();
+        input = PlayerInputResolver.Require(this);
     }
 
     private void Update()

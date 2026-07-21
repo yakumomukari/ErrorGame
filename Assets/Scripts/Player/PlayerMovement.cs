@@ -1,13 +1,12 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(PlayerStats))]
-[RequireComponent(typeof(GameInputReader))]
 [DisallowMultipleComponent]
 public sealed class PlayerMovement : MonoBehaviour
 {
     private Rigidbody2D body;
     private PlayerStats stats;
-    private GameInputReader input;
+    private IPlayerInput input;
     private Vector2 moveInput;
     private Vector2 lastMoveDirection = Vector2.down;
     private bool isDashing;
@@ -21,7 +20,7 @@ public sealed class PlayerMovement : MonoBehaviour
     {
         body = GetComponent<Rigidbody2D>();
         stats = GetComponent<PlayerStats>();
-        input = GetComponent<GameInputReader>();
+        input = PlayerInputResolver.Require(this);
     }
 
     private void Update()

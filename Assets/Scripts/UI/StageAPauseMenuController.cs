@@ -1,5 +1,5 @@
+using System;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public sealed class StageAPauseMenuController : MonoBehaviour
@@ -11,16 +11,23 @@ public sealed class StageAPauseMenuController : MonoBehaviour
     [SerializeField] private Button logButton;
     [SerializeField] private Button mainMenuButton;
 
-    private Player player;
-    private GameInputReader input;
+    private IPlayerHudModel hudModel;
+    private IPlayerInput input;
+    private ISceneNavigator sceneNavigator;
     private bool listenersRegistered;
 
     public bool IsPaused { get; private set; }
 
     public void Bind(Player playerReference)
     {
-        player = playerReference;
-        input = player.Input;
+        Bind(new PlayerHudModel(playerReference));
+    }
+
+    public void Bind(IPlayerHudModel model)
+    {
+        hudModel = model ?? throw new ArgumentNullException(nameof(model));
+        input = hudModel.Input;
+        if (sceneNavigator == null) sceneNavigator = new UnitySceneNavigator();
         if (!listenersRegistered)
         {
             itemsButton.onClick.AddListener(ShowItems);
@@ -32,6 +39,11 @@ public sealed class StageAPauseMenuController : MonoBehaviour
 
         ShowItems();
         ForceClose();
+    }
+
+    public void SetSceneNavigator(ISceneNavigator navigator)
+    {
+        sceneNavigator = navigator;
     }
 
     public void Configure(
@@ -52,7 +64,7 @@ public sealed class StageAPauseMenuController : MonoBehaviour
 
     private void Update()
     {
-        if (player == null || player.Health.IsDead) return;
+        if (hudModel == null || hudModel.IsDead) return;
         if (input.PausePressedThisFrame) TogglePause();
 
         if (!IsPaused) return;
@@ -90,7 +102,7 @@ public sealed class StageAPauseMenuController : MonoBehaviour
     {
         IsPaused = false;
         Time.timeScale = 1f;
-        SceneManager.LoadScene("MainMenu");
+        sceneNavigator.LoadMainMenu();
     }
 
     private void ShowItems() => SelectTab("ITEMS", "Item collection is not implemented yet");

@@ -6,6 +6,8 @@ public sealed class GameSaveData
 {
     public int version = 5;
     public int dungeonSeed;
+    public int floorNumber = 1;
+    public bool beginsAtFloorStart;
     public int currentRoomX;
     public int currentRoomY;
     public bool hasCurrentRoomEntrance;
@@ -42,6 +44,7 @@ public sealed class RoomSaveData
     public int combatRewardType = -2;
     public bool combatRewardCollected;
     public List<int> collectedSecretRewards = new List<int>();
+    public string roomVariantId;
 }
 
 [Serializable]

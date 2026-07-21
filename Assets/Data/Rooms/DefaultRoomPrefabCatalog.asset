@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e2150e44bfe43d2b99173eaba1f3bb0, type: 3}
+  m_Name: DefaultRoomPrefabCatalog
+  m_EditorClassIdentifier: 
+  entries:
+  - stableId: start_default
+    roomType: 0
+    prefab: {fileID: 6745061789280845765, guid: 956b8556a7c6a884daf6a3c935f2481c, type: 3}
+    weight: 1
+  - stableId: combat_default
+    roomType: 1
+    prefab: {fileID: 6745061789280845765, guid: 956b8556a7c6a884daf6a3c935f2481c, type: 3}
+    weight: 1
+  - stableId: item_default
+    roomType: 2
+    prefab: {fileID: 538332734450208191, guid: a3fdea70b9c9fd1439e34026bfc91b32, type: 3}
+    weight: 1
+  - stableId: shop_default
+    roomType: 3
+    prefab: {fileID: 7819084125392207913, guid: 0d0637d8ed6463542b5dc76ef6aa663c, type: 3}
+    weight: 1
+  - stableId: boss_default
+    roomType: 4
+    prefab: {fileID: 3363450988700566051, guid: 2289e83f1329f0c4ea89146844fc7c00, type: 3}
+    weight: 1
+  - stableId: secret_default
+    roomType: 5
+    prefab: {fileID: 4735672616308116603, guid: 08034371ea87d0847a7021dacf6ea4eb, type: 3}
+    weight: 1
+  - stableId: super_secret_default
+    roomType: 6
+    prefab: {fileID: 4893955957626295281, guid: c4c7147deb4bccc4c8cd4b93236bd6b9, type: 3}
+    weight: 1
